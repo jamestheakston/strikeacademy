@@ -1,1 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strike Academy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #111111;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen text-xs flex flex-col justify-between p-6 sm:p-12 max-w-2xl mx-auto selection:bg-zinc-100">
 
+    <div>
+        <!-- Minimal Header -->
+        <header class="mb-20">
+            <a href="#" class="font-normal uppercase tracking-widest text-zinc-900">Strike Academy</a>
+        </header>
+
+        <!-- Pure Statement -->
+        <main class="space-y-16">
+            <section class="space-y-4">
+                <p class="text-zinc-900 text-sm leading-relaxed max-w-md">
+                    Independent private examination board. Double-blind skill evaluation decoupled from teaching institutions.
+                </p>
+                <p class="text-zinc-400 font-mono text-[11px]">
+                    Not affiliated with state bodies or national qualifications frameworks.
+                </p>
+            </section>
+
+            <!-- 2026 Examination Notice -->
+            <section class="border border-zinc-200 p-4 space-y-3 rounded-sm font-mono text-[11px]">
+                <div class="flex justify-between items-center text-zinc-900">
+                    <span class="uppercase tracking-wider font-medium">Notice — 2026 Autumn Examinations</span>
+                    <span class="text-red-600 text-[10px]">In Progress</span>
+                </div>
+                <p class="text-zinc-600 leading-relaxed">
+                    Registration for the Autumn session is currently open. Candidates have until <strong class="text-zinc-900 font-semibold">October 30th, 2026</strong> to submit registration forms.
+                </p>
+                <div class="pt-2 flex justify-start">
+                    <button onclick="apply('2026 Autumn Examinations')" class="text-zinc-900 underline underline-offset-2 hover:text-zinc-600 font-medium">Register for 2026 Autumn &rarr;</button>
+                </div>
+            </section>
+
+            <!-- Exam Centre Registration -->
+            <section class="space-y-3">
+                <p class="font-mono text-zinc-400 uppercase tracking-wider text-[10px]">Exam Centre Accreditation</p>
+                <div class="space-y-3 text-zinc-800">
+                    <p class="text-zinc-900 text-xs leading-relaxed max-w-md">
+                        Educational institutions and private facilities may register to host Strike Academy examinations.
+                    </p>
+                    <div class="font-mono text-[11px] text-zinc-500 space-y-1 pl-3 border-l border-zinc-200">
+                        <p class="text-zinc-400 uppercase text-[9px] tracking-wider mb-1">Mandatory Prerequisites</p>
+                        <p>&bull; SIMS.net software integration</p>
+                        <p>&bull; Fully qualified exam invigilators on site</p>
+                    </div>
+                    <div class="pt-1">
+                        <button onclick="applyCentre()" class="font-mono text-[11px] text-zinc-900 underline underline-offset-2 hover:text-zinc-600 font-medium">Apply as Exam Centre &rarr;</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Past Papers -->
+            <section class="space-y-3">
+                <p class="font-mono text-zinc-400 uppercase tracking-wider text-[10px]">Past Papers</p>
+                <div class="font-mono text-[11px] flex justify-between items-baseline border-b border-zinc-100 pb-2">
+                    <span class="text-zinc-800">2026 Summer Multi-Subject</span>
+                    <a href="/assets/pastpapers/2026summer.pdf" target="_blank" rel="noopener" class="text-zinc-900 underline underline-offset-2 hover:text-zinc-600">Download (PDF) &rarr;</a>
+                </div>
+            </section>
+
+            <!-- Contact -->
+            <section class="space-y-2">
+                <p class="font-mono text-zinc-400 uppercase tracking-wider text-[10px]">Enquiries</p>
+                <a href="mailto:desk@strikeacademy.org" class="text-zinc-800 underline underline-offset-2 hover:text-zinc-500">desk@strikeacademy.org</a>
+            </section>
+        </main>
+    </div>
+
+    <!-- Minimal Footer -->
+    <footer class="mt-24 pt-6 border-t border-zinc-100 text-zinc-400 font-mono text-[10px] flex justify-between">
+        <span>Strike Academy Board</span>
+        <span>2026</span>
+    </footer>
+
+    <!-- Minimal Modal -->
+    <div id="modal" class="fixed inset-0 bg-white/90 backdrop-blur-xs flex items-center justify-center p-6 hidden">
+        <div class="w-full max-w-xs space-y-4">
+            <p id="modal-title" class="font-mono text-zinc-900 text-[11px]"></p>
+            <form onsubmit="submitForm(event)" class="space-y-3">
+                <input id="modal-input-institution" type="text" placeholder="Institution / Centre Name (optional)" class="w-full bg-transparent border-b border-zinc-300 focus:border-zinc-900 focus:outline-none py-1 text-xs hidden">
+                <input type="email" required placeholder="Email address" class="w-full bg-transparent border-b border-zinc-300 focus:border-zinc-900 focus:outline-none py-1 text-xs">
+                <div class="flex gap-4 pt-2">
+                    <button type="submit" class="text-zinc-900 underline underline-offset-2">Submit</button>
+                    <button type="button" onclick="closeModal()" class="text-zinc-400 hover:text-zinc-900">Cancel</button>
+                </div>
+            </form>
+            <div id="modal-msg" class="hidden font-mono text-[11px] text-zinc-600 pt-2">Application noted. Contact will follow.</div>
+        </div>
+    </div>
+
+    <script>
+        function apply(code) {
+            document.getElementById('modal-title').textContent = 'Register for ' + code;
+            document.getElementById('modal-input-institution').classList.add('hidden');
+            document.getElementById('modal-msg').classList.add('hidden');
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function applyCentre() {
+            document.getElementById('modal-title').textContent = 'Exam Centre Hosting Application';
+            document.getElementById('modal-input-institution').classList.remove('hidden');
+            document.getElementById('modal-msg').classList.add('hidden');
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        function submitForm(e) {
+            e.preventDefault();
+            document.getElementById('modal-msg').classList.remove('hidden');
+            setTimeout(closeModal, 1800);
+        }
+
+        function verify() {
+            const val = document.getElementById('cert-id').value.trim();
+            const out = document.getElementById('cert-output');
+            if (!val) return;
+            out.textContent = val.toUpperCase().startsWith('SA-') ? val.toUpperCase() + ': Valid record' : 'Record not found';
+            out.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
