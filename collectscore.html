@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidate Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fafafa;
+        }
+        input:focus {
+            outline: none;
+            border-color: #171717;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .animate-spinner {
+            animation: spin 0.8s linear infinite;
+        }
+        .fade-transition {
+            transition: opacity 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6 text-neutral-800 antialiased">
+
+    <!-- PAGE 1: Candidate Entry Form -->
+    <main id="entryPage" class="w-full max-w-xs fade-transition opacity-100">
+        <form id="candidateForm" class="flex flex-col gap-6" onsubmit="handleSubmit(event)">
+            <div class="flex flex-col gap-2">
+                <label for="candidateNumber" class="text-sm tracking-wide text-neutral-500 font-normal">
+                    Enter your candidate number
+                </label>
+                <input 
+                    type="text" 
+                    id="candidateNumber" 
+                    name="candidateNumber" 
+                    required 
+                    autocomplete="off"
+                    placeholder="e.g. 8042" 
+                    class="w-full bg-transparent border-b border-neutral-300 py-2 text-lg tracking-wider text-neutral-900 transition-colors duration-200 placeholder-neutral-300"
+                />
+            </div>
+
+            <button 
+                type="submit" 
+                id="submitBtn"
+                class="w-full bg-neutral-900 hover:bg-neutral-800 text-white text-sm py-2.5 rounded-lg transition-all duration-150 active:scale-[0.98] font-medium"
+            >
+                Continue
+            </button>
+        </form>
+    </main>
+
+    <!-- PAGE 2: Loading Screen (Separate Page) -->
+    <main id="loadingPage" class="w-full max-w-xs hidden fade-transition opacity-0">
+        <div class="flex flex-col items-center justify-center gap-6 py-12">
+            <div class="w-12 h-12 border-4 border-neutral-200 border-t-neutral-800 rounded-full animate-spinner"></div>
+            <p id="loadingStatus" class="text-base text-neutral-700 tracking-wide font-medium h-6 text-center">
+                Finding your file…
+            </p>
+        </div>
+    </main>
+
+    <!-- PAGE 3: Results Screen -->
+    <main id="resultsPage" class="w-full max-w-sm hidden fade-transition opacity-0">
+        <div class="flex flex-col gap-5">
+            <!-- Header Info -->
+            <div class="flex items-center justify-between border-b border-neutral-200 pb-3">
+                <span class="text-xs tracking-wider text-neutral-400 uppercase">Candidate</span>
+                <span id="displayCandidateNo" class="text-sm font-medium text-neutral-900">#8042</span>
+            </div>
+
+            <!-- Main Score & Document Card -->
+            <div class="bg-white border border-neutral-200/80 rounded-xl p-5 shadow-sm flex flex-col gap-5">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-neutral-500 font-medium">Document File</span>
+                    <span class="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> SAV Verified
+                    </span>
+                </div>
+                <div id="displayDocumentPath" class="text-xs text-neutral-500 font-mono truncate bg-neutral-50 p-2.5 rounded-md border border-neutral-100 select-all">
+                    STRIKEACADEMY/2026/STUDENT/8042/resultpdf/final.pdf
+                </div>
+
+                <!-- SAV Score Container -->
+                <div class="border-t border-b border-neutral-100 py-4 flex flex-col gap-1">
+                    <span class="text-xs text-neutral-500 font-medium">SAV Score</span>
+                    <span class="text-[10px] text-neutral-400 font-normal">SAV (Strike Academy Verified)</span>
+                    
+                    <div class="flex items-center justify-between mt-2">
+                        <!-- Locked State: Open Button -->
+                        <div id="scoreLockedContainer" class="w-full">
+                            <button 
+                                id="openDocBtn"
+                                onclick="openDocumentModal()"
+                                class="w-full bg-neutral-900 hover:bg-neutral-800 text-white text-xs py-3 rounded-lg transition-all duration-150 font-medium flex items-center justify-center gap-2 shadow-sm active:scale-[0.98]"
+                            >
+                                <svg class="w-4 h-4 text-neutral-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"></path>
+                                </svg>
+                                <span>Open Document to View Score</span>
+                            </button>
+                        </div>
+
+                        <!-- Unlocked State: Score Display -->
+                        <div id="scoreUnlockedContainer" class="hidden flex items-baseline justify-between w-full">
+                            <div class="text-4xl font-light tracking-tight text-neutral-900">
+                                88 <span class="text-base text-neutral-400 font-normal">/ 100</span>
+                            </div>
+                            
+                            <!-- GCSE Equivalent Section -->
+                            <div class="flex flex-col items-end max-w-[170px] text-right">
+                                <span class="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">GCSE Equivalent</span>
+                                <span id="gcseUnlockedBadge" class="text-sm font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200/60 mt-1">
+                                    Grade 8 <span class="text-xs font-normal text-emerald-600">(A*)</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GCSE Locked Notice when Score is hidden -->
+                    <div id="gcseLockedText" class="text-[11px] font-normal text-amber-700 bg-amber-50 border border-amber-200/80 rounded-md px-2.5 py-1.5 mt-2 leading-tight">
+                        Open your results first to see your GCSE score.
+                    </div>
+                </div>
+
+                <!-- Breakdown Section (Revealed on return) -->
+                <div id="breakdownSection" class="pt-1 flex flex-col gap-2.5 text-xs opacity-50 transition-opacity duration-300">
+                    <div class="flex items-center justify-between">
+                        <span class="text-neutral-400 font-medium uppercase tracking-wider text-[10px]">Score Breakdown</span>
+                        <span id="breakdownStatusTag" class="text-[10px] text-neutral-400 italic">Unlocks after opening document</span>
+                    </div>
+                    <div id="breakdownContent" class="flex flex-col gap-2.5 blur-[2px] transition-all duration-300 pointer-events-none select-none">
+                        <div class="flex justify-between items-center text-neutral-600">
+                            <span>Technical Assessment</span>
+                            <span class="font-medium text-neutral-900">45 / 50</span>
+                        </div>
+                        <div class="flex justify-between items-center text-neutral-600">
+                            <span>Analytical Reasoning</span>
+                            <span class="font-medium text-neutral-900">25 / 30</span>
+                        </div>
+                        <div class="flex justify-between items-center text-neutral-600">
+                            <span>Communication & Logic</span>
+                            <span class="font-medium text-neutral-900">18 / 20</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sign-off & Verification Section -->
+                <div class="border-t border-neutral-100 pt-4 flex flex-col gap-3">
+                    <span class="text-neutral-400 font-medium uppercase tracking-wider text-[10px]">Sign-off & Verification</span>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center text-xs font-semibold text-neutral-800">
+                                JT
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-medium text-neutral-900">James Theakston</span>
+                                <span class="text-[11px] text-neutral-500">SAV Head Office</span>
+                            </div>
+                        </div>
+                        <!-- Verified Checkmark Icon -->
+                        <div class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm" title="Verified Signature">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="bg-neutral-50 p-2.5 rounded-lg border border-neutral-100 flex flex-col gap-1 text-[11px] text-neutral-500">
+                        <div class="flex justify-between items-center">
+                            <span>Status:</span>
+                            <span class="font-mono text-emerald-600 font-medium flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                SAV (Strike Academy Verified)
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Approved Date:</span>
+                            <span class="font-mono text-neutral-700">Oct 17, 2026</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Digital Signature:</span>
+                            <span class="font-mono text-neutral-700">SAV-SHA256 (e8a9...b412)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button 
+                onclick="resetForm()"
+                class="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs py-2.5 rounded-lg transition-all duration-150 font-medium"
+            >
+                Back to Search
+            </button>
+        </div>
+    </main>
+
+    <!-- PAGE 4: Authentic PDF Reader Application Modal -->
+    <div id="documentModal" class="fixed inset-0 bg-neutral-900/80 backdrop-blur-md hidden items-center justify-center p-2 sm:p-6 z-50 fade-transition opacity-0">
+        <div class="bg-[#323639] rounded-xl max-w-3xl w-full h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-neutral-700">
+            
+            <!-- Authentic PDF Toolbar (Acrobat / Browser style) -->
+            <div class="bg-[#2a2e31] text-neutral-300 px-4 py-2 flex items-center justify-between border-b border-neutral-700 select-none text-xs">
+                <div class="flex items-center gap-3 truncate">
+                    <!-- PDF Icon -->
+                    <div class="bg-red-600 text-white p-1 rounded">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9.5 8.5c0 .83-.67 1.5-1.5 1.5H7v2H5.5V9H8c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V9H13c.83 0 1.5.67 1.5 1.5v3zm4-3.5h-2v1h1.5V12H16v2.5h-1.5V9H18.5v1.5z"/>
+                        </svg>
+                    </div>
+                    <span id="modalDocPath" class="font-mono text-[11px] text-neutral-200 truncate">STRIKEACADEMY/2026/STUDENT/8042/resultpdf/final.pdf</span>
+                </div>
+
+                <!-- PDF Controls Bar -->
+                <div class="hidden sm:flex items-center gap-3 bg-[#1e2123] px-3 py-1 rounded-md text-neutral-400">
+                    <span class="text-[11px]">Page 1 / 1</span>
+                    <span class="h-3 w-px bg-neutral-600"></span>
+                    <button class="hover:text-white" title="Zoom Out">−</button>
+                    <span class="text-[11px] text-neutral-200">100%</span>
+                    <button class="hover:text-white" title="Zoom In">+</button>
+                    <span class="h-3 w-px bg-neutral-600"></span>
+                    <button class="hover:text-white" title="Fit to screen">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"/></svg>
+                    </button>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="flex items-center gap-2">
+                    <button onclick="closeDocumentModal()" class="bg-neutral-800 hover:bg-neutral-700 text-neutral-200 px-3 py-1 rounded text-xs transition-colors flex items-center gap-1.5 border border-neutral-600">
+                        <span>Close Document</span>
+                        <kbd class="text-[9px] bg-neutral-900 px-1 rounded text-neutral-400">ESC</kbd>
+                    </button>
+                </div>
+            </div>
+
+            <!-- PDF Scrollable Canvas Viewport -->
+            <div class="flex-1 bg-[#525659] p-4 sm:p-8 overflow-y-auto flex justify-center items-start">
+                
+                <!-- Realistic PDF Paper Sheet (A4 ratio appearance) -->
+                <div class="bg-white text-neutral-900 w-full max-w-[595px] min-h-[842px] p-8 sm:p-12 shadow-2xl flex flex-col justify-between font-serif relative border border-neutral-300">
+                    
+                    <!-- Watermark -->
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
+                        <span class="text-7xl font-bold tracking-widest uppercase rotate-45 select-none text-neutral-900">STRIKE ACADEMY</span>
+                    </div>
+
+                    <!-- PDF Document Content Header -->
+                    <div>
+                        <div class="flex justify-between items-start border-b-2 border-neutral-900 pb-6 mb-6">
+                            <div>
+                                <h1 class="text-2xl font-bold tracking-tight font-sans text-neutral-900">STRIKE ACADEMY</h1>
+                                <p class="text-xs font-sans tracking-widest text-neutral-500 uppercase mt-0.5">Office of Academic Standards & Verification</p>
+                                <p class="text-[10px] font-mono text-neutral-400 mt-1">Ref: SAV-2026-EVAL-OCT</p>
+                            </div>
+                            <div class="text-right font-sans">
+                                <div class="inline-block bg-neutral-900 text-white text-[9px] font-bold tracking-widest px-2.5 py-1 uppercase rounded-xs">
+                                    OFFICIAL TRANSCRIPT
+                                </div>
+                                <p class="text-[10px] text-neutral-500 mt-2">Date: 17 October 2026</p>
+                            </div>
+                        </div>
+
+                        <!-- Candidate & Session Metadata Box -->
+                        <div class="grid grid-cols-2 gap-4 border border-neutral-300 p-4 mb-6 font-sans text-xs bg-neutral-50/50">
+                            <div>
+                                <span class="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block">Candidate Number</span>
+                                <span id="modalCandidateNo" class="font-bold text-neutral-900 text-sm font-mono">#8042</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block">Examination Cycle</span>
+                                <span class="font-medium text-neutral-800">Autumn 2026 Assessment</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block">Verification Protocol</span>
+                                <span class="font-medium text-emerald-700">SAV (Strike Academy Verified)</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block">Document ID</span>
+                                <span class="font-mono text-[10px] text-neutral-600">STK-8042-PDF</span>
+                            </div>
+                        </div>
+
+                        <!-- Main Results Table -->
+                        <div class="font-sans mb-8">
+                            <h2 class="text-xs font-bold uppercase tracking-wider text-neutral-700 mb-3 border-b border-neutral-200 pb-1">Candidate Evaluation Results</h2>
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="border-b-2 border-neutral-800 text-neutral-700 font-semibold">
+                                        <th class="py-2">Module Category</th>
+                                        <th class="py-2 text-center">Maximum Marks</th>
+                                        <th class="py-2 text-right">Score Awarded</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-neutral-200">
+                                    <tr>
+                                        <td class="py-2.5 text-neutral-800">Technical Assessment</td>
+                                        <td class="py-2.5 text-center text-neutral-500 font-mono">50</td>
+                                        <td class="py-2.5 text-right font-mono font-bold">45</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2.5 text-neutral-800">Analytical Reasoning</td>
+                                        <td class="py-2.5 text-center text-neutral-500 font-mono">30</td>
+                                        <td class="py-2.5 text-right font-mono font-bold">25</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2.5 text-neutral-800">Communication & Logic</td>
+                                        <td class="py-2.5 text-center text-neutral-500 font-mono">20</td>
+                                        <td class="py-2.5 text-right font-mono font-bold">18</td>
+                                    </tr>
+                                    <tr class="bg-neutral-100/80 font-bold border-t-2 border-neutral-800">
+                                        <td class="py-3 px-2 text-neutral-900">Total SAV Score</td>
+                                        <td class="py-3 text-center text-neutral-600 font-mono">100</td>
+                                        <td class="py-3 px-2 text-right font-mono text-sm text-neutral-900">88 / 100</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- GCSE Equivalency Certificate Banner -->
+                        <div class="font-sans bg-neutral-900 text-white p-4 rounded-md flex items-center justify-between mb-8">
+                            <div>
+                                <span class="text-[10px] text-neutral-400 uppercase tracking-widest font-semibold block">Official GCSE Equivalency Standard</span>
+                                <span class="text-base font-bold text-white">GCSE Grade 8 <span class="text-emerald-400 text-sm font-normal">(Equivalent to Grade A*)</span></span>
+                            </div>
+                            <div class="border border-neutral-700 bg-neutral-800 px-3 py-1.5 rounded text-xs font-mono font-semibold text-emerald-400">
+                                SAV CERTIFIED
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PDF Footer & Official Signatures -->
+                    <div class="font-sans border-t border-neutral-300 pt-6 mt-auto">
+                        <div class="flex justify-between items-end">
+                            <div>
+                                <!-- Script-like signature styling -->
+                                <div class="font-serif italic text-lg text-neutral-800 font-bold tracking-wide -mb-1">
+                                    James Theakston
+                                </div>
+                                <div class="h-px w-36 bg-neutral-400 my-1"></div>
+                                <p class="text-xs font-semibold text-neutral-900">James Theakston</p>
+                                <p class="text-[10px] text-neutral-500">SAV Head Office • Lead Examiner</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="w-12 h-12 border-2 border-neutral-900 rounded-full flex items-center justify-center p-1 ml-auto mb-1 opacity-80">
+                                    <div class="w-full h-full border border-dashed border-neutral-800 rounded-full flex items-center justify-center text-[7px] font-bold text-center leading-tight uppercase">
+                                        SAV<br>OFFICIAL
+                                    </div>
+                                </div>
+                                <p class="text-[9px] font-mono text-neutral-400">SHA-256 Verified</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- PDF Viewer Bottom Toolbar Bar -->
+            <div class="bg-[#2a2e31] text-neutral-400 text-[11px] px-4 py-2 flex items-center justify-between border-t border-neutral-700">
+                <span>Strike Academy SAV Report Viewer v2.4</span>
+                <button 
+                    onclick="closeDocumentModal()" 
+                    class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-1.5 rounded transition-colors text-xs shadow-sm"
+                >
+                    Return to Portal (Reveal Score)
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let documentOpened = false;
+
+        async function handleSubmit(event) {
+            event.preventDefault();
+            const input = document.getElementById('candidateNumber');
+            const entryPage = document.getElementById('entryPage');
+            const loadingPage = document.getElementById('loadingPage');
+            const loadingStatus = document.getElementById('loadingStatus');
+            const resultsPage = document.getElementById('resultsPage');
+            const displayCandidateNo = document.getElementById('displayCandidateNo');
+            const displayDocumentPath = document.getElementById('displayDocumentPath');
+
+            const candidateValue = input.value.trim();
+            if (!candidateValue) return;
+
+            // Transition out Page 1 (Entry Page)
+            entryPage.classList.remove('opacity-100');
+            entryPage.classList.add('opacity-0');
+
+            setTimeout(async () => {
+                entryPage.classList.add('hidden');
+
+                // Transition in Page 2 (Loading Screen)
+                loadingPage.classList.remove('hidden');
+                setTimeout(() => {
+                    loadingPage.classList.remove('opacity-0');
+                    loadingPage.classList.add('opacity-100');
+                }, 50);
+
+                const steps = [
+                    "Finding your file…",
+                    "Opening your document…",
+                    "Calculating your final score…"
+                ];
+
+                const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+                for (let i = 0; i < steps.length; i++) {
+                    loadingStatus.textContent = steps[i];
+                    await delay(1600);
+                }
+
+                // Transition out Page 2 (Loading Screen)
+                loadingPage.classList.remove('opacity-100');
+                loadingPage.classList.add('opacity-0');
+
+                setTimeout(() => {
+                    loadingPage.classList.add('hidden');
+
+                    // Set result data dynamically
+                    displayCandidateNo.textContent = "#" + candidateValue;
+                    displayDocumentPath.textContent = `STRIKEACADEMY/2026/STUDENT/${candidateValue}/resultpdf/final.pdf`;
+                    
+                    // Update modal content references
+                    document.getElementById('modalCandidateNo').textContent = "#" + candidateValue;
+                    document.getElementById('modalDocPath').textContent = `STRIKEACADEMY/2026/STUDENT/${candidateValue}/resultpdf/final.pdf`;
+
+                    // Reset document view & score states
+                    documentOpened = false;
+                    document.getElementById('scoreLockedContainer').classList.remove('hidden');
+                    document.getElementById('scoreUnlockedContainer').classList.add('hidden');
+                    document.getElementById('gcseLockedText').classList.remove('hidden');
+                    document.getElementById('breakdownSection').classList.add('opacity-50');
+                    document.getElementById('breakdownStatusTag').classList.remove('hidden');
+                    document.getElementById('breakdownContent').classList.add('blur-[2px]', 'pointer-events-none', 'select-none');
+
+                    // Transition in Page 3 (Results Screen)
+                    resultsPage.classList.remove('hidden');
+                    setTimeout(() => {
+                        resultsPage.classList.remove('opacity-0');
+                        resultsPage.classList.add('opacity-100');
+                    }, 50);
+                }, 300);
+
+            }, 300);
+        }
+
+        function openDocumentModal() {
+            const modal = document.getElementById('documentModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.classList.add('opacity-100');
+            }, 50);
+        }
+
+        function closeDocumentModal() {
+            const modal = document.getElementById('documentModal');
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0');
+            
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+
+                // Mark document as opened and reveal SAV score & GCSE score on results card
+                if (!documentOpened) {
+                    documentOpened = true;
+                    
+                    // Reveal SAV score & hide locked button
+                    document.getElementById('scoreLockedContainer').classList.add('hidden');
+                    document.getElementById('scoreUnlockedContainer').classList.remove('hidden');
+                    document.getElementById('gcseLockedText').classList.add('hidden');
+                    
+                    // Reveal Breakdown
+                    document.getElementById('breakdownSection').classList.remove('opacity-50');
+                    document.getElementById('breakdownStatusTag').classList.add('hidden');
+                    document.getElementById('breakdownContent').classList.remove('blur-[2px]', 'pointer-events-none', 'select-none');
+                }
+            }, 300);
+        }
+
+        function resetForm() {
+            const entryPage = document.getElementById('entryPage');
+            const resultsPage = document.getElementById('resultsPage');
+            const input = document.getElementById('candidateNumber');
+
+            resultsPage.classList.remove('opacity-100');
+            resultsPage.classList.add('opacity-0');
+
+            setTimeout(() => {
+                resultsPage.classList.add('hidden');
+                
+                // Reset form input
+                input.value = '';
+
+                // Show entry page
+                entryPage.classList.remove('hidden');
+                setTimeout(() => {
+                    entryPage.classList.remove('opacity-0');
+                    entryPage.classList.add('opacity-100');
+                }, 50);
+            }, 300);
+        }
+
+        // Close PDF modal on Escape key press
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('documentModal');
+                if (!modal.classList.contains('hidden')) {
+                    closeDocumentModal();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
